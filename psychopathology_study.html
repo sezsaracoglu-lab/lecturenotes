@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psychopathology — Interactive Study Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1b2a;
+    --bg2: #122333;
+    --bg3: #172d3f;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --cream: #f0e6d3;
+    --cream-dim: #c8bba9;
+    --c1: #e07a5f;   /* L1 Diagnosis */
+    --c2: #9b72cf;   /* L2 Worldviews */
+    --c3: #e05151;   /* L3 Fear/Anxiety */
+    --c4: #3eb489;   /* L4 Child Abuse/Addiction */
+    --c1-dim: rgba(224,122,95,0.18);
+    --c2-dim: rgba(155,114,207,0.18);
+    --c3-dim: rgba(224,81,81,0.18);
+    --c4-dim: rgba(62,180,137,0.18);
+    --border: rgba(201,168,76,0.2);
+    --text: #ddd6c8;
+    --text-dim: #8a9bb0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14.5px;
+    line-height: 1.65;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.4;
+  }
+
+  h1, h2, h3, h4 { font-family: 'Cormorant Garamond', serif; font-weight: 600; }
+
+  /* LAYOUT */
+  .app { display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto; z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 28px 20px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo h1 {
+    font-size: 20px; color: var(--gold);
+    font-style: italic; line-height: 1.2;
+  }
+  .sidebar-logo span {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--text-dim);
+    display: block; margin-top: 4px;
+  }
+
+  .nav-section { padding: 16px 0 8px; }
+  .nav-label {
+    padding: 0 20px 6px;
+    font-size: 9.5px; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .nav-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px;
+    cursor: pointer; transition: all .2s;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px; color: var(--text-dim);
+    border: none; background: none; width: 100%; text-align: left;
+    border-left: 3px solid transparent;
+  }
+  .nav-btn:hover { color: var(--cream); background: rgba(255,255,255,.04); }
+  .nav-btn.active {
+    color: var(--gold); border-left-color: var(--gold);
+    background: rgba(201,168,76,.08);
+  }
+  .nav-btn .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* PROGRESS */
+  .progress-section {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .progress-section h4 {
+    font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px;
+  }
+  .progress-item { margin-bottom: 10px; }
+  .progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 11.5px; margin-bottom: 4px;
+  }
+  .progress-bar {
+    height: 4px; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 2px; transition: width .6s ease;
+  }
+  .p1 { background: var(--c1); }
+  .p2 { background: var(--c2); }
+  .p3 { background: var(--c3); }
+  .p4 { background: var(--c4); }
+
+  /* MAIN */
+  .main { flex: 1; overflow: hidden; }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h2 { font-size: 22px; color: var(--gold-light); font-style: italic; }
+  .topbar-meta { font-size: 12px; color: var(--text-dim); }
+
+  /* VIEWS */
+  .view { display: none; padding: 28px 32px; min-height: calc(100vh - 57px); }
+  .view.active { display: block; }
+
+  /* ===== VIEW 0: MINDMAP ===== */
+  #view-mindmap .mindmap-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: auto;
+    padding: 20px;
+  }
+  #mindmap-svg { display: block; margin: auto; }
+
+  /* ===== VIEW 1: CONCEPT CARDS ===== */
+  .topic-filter {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
+  }
+  .topic-pill {
+    padding: 5px 14px; border-radius: 20px; font-size: 12px;
+    cursor: pointer; transition: all .2s; border: 1px solid transparent;
+    font-family: 'DM Sans', sans-serif; font-weight: 500;
+  }
+  .topic-pill.all { border-color: var(--gold); color: var(--gold); }
+  .topic-pill.all.active { background: var(--gold); color: var(--bg); }
+  .topic-pill.t1 { border-color: var(--c1); color: var(--c1); }
+  .topic-pill.t1.active { background: var(--c1); color: #fff; }
+  .topic-pill.t2 { border-color: var(--c2); color: var(--c2); }
+  .topic-pill.t2.active { background: var(--c2); color: #fff; }
+  .topic-pill.t3 { border-color: var(--c3); color: var(--c3); }
+  .topic-pill.t3.active { background: var(--c3); color: #fff; }
+  .topic-pill.t4 { border-color: var(--c4); color: var(--c4); }
+  .topic-pill.t4.active { background: var(--c4); color: #fff; }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 18px;
+  }
+
+  .concept-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .concept-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+  .concept-card .card-header {
+    padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+  }
+  .concept-card .card-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; }
+  .concept-card .card-tag {
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 4px; font-weight: 500;
+  }
+  .concept-card .card-toggle {
+    font-size: 18px; color: var(--text-dim); transition: transform .3s; flex-shrink: 0; margin-left: 8px;
+  }
+  .concept-card.expanded .card-toggle { transform: rotate(45deg); }
+  .concept-card .card-body {
+    display: none; padding: 0 18px 16px; border-top: 1px solid var(--border);
+  }
+  .concept-card.expanded .card-body { display: block; }
+  .card-section { margin-top: 12px; }
+  .card-section-label {
+    font-size: 9.5px; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 4px; font-weight: 600;
+  }
+  .card-section-content { font-size: 13.5px; line-height: 1.65; }
+  .card-section-content strong { color: var(--gold-light); }
+
+  /* topic color borders */
+  .t1-card { border-left: 3px solid var(--c1); }
+  .t2-card { border-left: 3px solid var(--c2); }
+  .t3-card { border-left: 3px solid var(--c3); }
+  .t4-card { border-left: 3px solid var(--c4); }
+  .t1-card .card-header { background: var(--c1-dim); }
+  .t2-card .card-header { background: var(--c2-dim); }
+  .t3-card .card-header { background: var(--c3-dim); }
+  .t4-card .card-header { background: var(--c4-dim); }
+  .t1-card .card-tag { background: var(--c1-dim); color: var(--c1); }
+  .t2-card .card-tag { background: var(--c2-dim); color: var(--c2); }
+  .t3-card .card-tag { background: var(--c3-dim); color: var(--c3); }
+  .t4-card .card-tag { background: var(--c4-dim); color: var(--c4); }
+  .t1-card .card-section-label { color: var(--c1); }
+  .t2-card .card-section-label { color: var(--c2); }
+  .t3-card .card-section-label { color: var(--c3); }
+  .t4-card .card-section-label { color: var(--c4); }
+
+  /* exam box */
+  .exam-box {
+    margin-top: 12px; padding: 12px 14px;
+    border-radius: 8px; background: rgba(201,168,76,.07);
+    border: 1px solid rgba(201,168,76,.25);
+  }
+  .exam-box .exam-q { font-style: italic; color: var(--gold-light); margin-bottom: 8px; font-size: 13px; }
+  .exam-box .exam-a { font-size: 13px; line-height: 1.65; }
+
+  /* ===== VIEW 2: FLASHCARDS ===== */
+  .flashcard-controls {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; align-items: center;
+  }
+  .fc-btn {
+    padding: 7px 16px; border-radius: 6px; font-size: 12.5px;
+    cursor: pointer; transition: all .2s;
+    font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--border); background: var(--bg2); color: var(--text);
+  }
+  .fc-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .fc-btn.primary { background: var(--gold); border-color: var(--gold); color: var(--bg); font-weight: 600; }
+  .fc-progress-info {
+    margin-left: auto; font-size: 13px; color: var(--text-dim);
+  }
+  .fc-progress-info span { color: var(--gold); font-weight: 600; }
+
+  .flashcard-arena {
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+
+  .fc-scene {
+    width: 100%; max-width: 620px; height: 300px;
+    perspective: 1200px; cursor: pointer;
+  }
+  .fc-card-inner {
+    width: 100%; height: 100%;
+    position: relative; transform-style: preserve-3d;
+    transition: transform .55s cubic-bezier(.4,0,.2,1);
+  }
+  .fc-card-inner.flipped { transform: rotateY(180deg); }
+  .fc-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    border-radius: 14px; padding: 28px 32px;
+    display: flex; flex-direction: column; justify-content: center;
+    border: 1px solid var(--border);
+  }
+  .fc-front {
+    background: var(--bg2);
+  }
+  .fc-back {
+    transform: rotateY(180deg);
+    background: var(--bg3);
+  }
+  .fc-topic-badge {
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px; width: fit-content;
+    margin-bottom: 16px; font-weight: 500;
+  }
+  .fc-question {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; line-height: 1.4; color: var(--cream);
+  }
+  .fc-hint { font-size: 12px; color: var(--text-dim); margin-top: 12px; }
+  .fc-answer { font-size: 14px; line-height: 1.65; color: var(--text); }
+  .fc-answer strong { color: var(--gold-light); }
+
+  .fc-nav {
+    display: flex; gap: 12px; align-items: center;
+  }
+  .fc-nav-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--bg2);
+    cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center;
+    transition: all .2s; color: var(--text);
+  }
+  .fc-nav-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .fc-counter { font-size: 14px; color: var(--text-dim); min-width: 60px; text-align: center; }
+
+  .fc-score-row {
+    display: flex; gap: 10px;
+  }
+  .fc-score-btn {
+    padding: 8px 20px; border-radius: 6px; font-size: 13px;
+    cursor: pointer; transition: all .2s; border: 1px solid;
+    font-family: 'DM Sans', sans-serif; font-weight: 500;
+  }
+  .fc-know { border-color: var(--c4); color: var(--c4); background: rgba(62,180,137,.08); }
+  .fc-know:hover { background: var(--c4); color: #fff; }
+  .fc-unsure { border-color: var(--c1); color: var(--c1); background: rgba(224,122,95,.08); }
+  .fc-unsure:hover { background: var(--c1); color: #fff; }
+
+  .fc-t1 { border-top: 3px solid var(--c1) !important; }
+  .fc-t2 { border-top: 3px solid var(--c2) !important; }
+  .fc-t3 { border-top: 3px solid var(--c3) !important; }
+  .fc-t4 { border-top: 3px solid var(--c4) !important; }
+
+  /* ===== VIEW 3: VISUAL REFS ===== */
+  .vr-section { margin-bottom: 40px; }
+  .vr-section h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px; margin-bottom: 6px;
+  }
+  .vr-subtitle { font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px; }
+
+  .comparison-table {
+    width: 100%; border-collapse: collapse;
+    background: var(--bg2); border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border); margin-bottom: 18px;
+  }
+  .comparison-table th {
+    padding: 12px 16px; text-align: left;
+    font-family: 'DM Sans', sans-serif; font-size: 11px;
+    letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  .comparison-table td {
+    padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,.05);
+    font-size: 13.5px; vertical-align: top;
+  }
+  .comparison-table tr:last-child td { border-bottom: none; }
+  .comparison-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* Diagram cards */
+  .diagram-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 24px; margin-bottom: 18px;
+  }
+  .diagram-card h4 {
+    font-size: 16px; margin-bottom: 16px; color: var(--gold-light);
+  }
+
+  /* MCQ */
+  .mcq-section { margin-bottom: 40px; }
+  .mcq-section h3 {
+    font-family: 'Cormorant Garamond', serif; font-size: 24px;
+    margin-bottom: 18px; color: var(--gold-light);
+  }
+  .mcq-item {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+  }
+  .mcq-question { font-size: 14.5px; margin-bottom: 14px; color: var(--cream); }
+  .mcq-option {
+    padding: 8px 14px; border-radius: 6px; margin-bottom: 7px;
+    font-size: 13.5px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,.08);
+    transition: all .2s;
+  }
+  .mcq-option:hover { border-color: var(--gold); background: rgba(201,168,76,.06); }
+  .mcq-option.correct {
+    border-color: var(--c4); background: rgba(62,180,137,.12);
+    color: #fff;
+  }
+  .mcq-option.correct::after {
+    content: ' ✓'; color: var(--c4); font-weight: 700;
+  }
+  .mcq-option.wrong {
+    border-color: var(--c3); background: rgba(224,81,81,.1); color: var(--text-dim);
+  }
+  .mcq-option.wrong::after { content: ' ✗'; color: var(--c3); }
+
+  /* Section headers */
+  .section-hdr {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 22px; margin-top: 32px;
+  }
+  .section-hdr:first-child { margin-top: 0; }
+  .section-hdr h2 { font-size: 28px; color: var(--cream); }
+  .section-hdr .lec-badge {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 4px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* Stat chips */
+  .stat-chip {
+    display: inline-block; padding: 2px 10px;
+    background: rgba(201,168,76,.12); border: 1px solid rgba(201,168,76,.3);
+    border-radius: 20px; font-size: 12.5px; color: var(--gold-light);
+    font-weight: 600; margin: 2px 3px;
+  }
+
+  /* Highlight */
+  .hl-gold { color: var(--gold-light); font-weight: 600; }
+  .hl-c1 { color: var(--c1); font-weight: 600; }
+  .hl-c2 { color: var(--c2); font-weight: 600; }
+  .hl-c3 { color: var(--c3); font-weight: 600; }
+  .hl-c4 { color: var(--c4); font-weight: 600; }
+
+  /* Responsive */
+  @media(max-width: 768px) {
+    .sidebar { width: 200px; }
+    .view { padding: 20px 16px; }
+    .topbar { padding: 12px 16px; }
+  }
+  @media(max-width: 600px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+
+  /* SVG mindmap */
+  .mm-node { cursor: pointer; }
+  .mm-node circle { transition: r .2s; }
+  .mm-node:hover circle { filter: brightness(1.2); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: rgba(201,168,76,.3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,.5); }
+
+  /* Fade-in animation */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .view.active > * { animation: fadeUp .4s ease both; }
+  .view.active > *:nth-child(2) { animation-delay: .05s; }
+  .view.active > *:nth-child(3) { animation-delay: .1s; }
+  .view.active > *:nth-child(4) { animation-delay: .15s; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Psycho&shy;pathology</h1>
+      <span>Study Platform · EUR</span>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Views</div>
+      <button class="nav-btn active" onclick="switchView('mindmap', this)">
+        <span class="icon">🗺</span> Mind Map
+      </button>
+      <button class="nav-btn" onclick="switchView('cards', this)">
+        <span class="icon">🃏</span> Concept Cards
+      </button>
+      <button class="nav-btn" onclick="switchView('flashcards', this)">
+        <span class="icon">⚡</span> Flashcard Quiz
+      </button>
+      <button class="nav-btn" onclick="switchView('visuals', this)">
+        <span class="icon">📊</span> Visual References
+      </button>
+      <button class="nav-btn" onclick="switchView('mcq', this)">
+        <span class="icon">✅</span> MCQ Practice
+      </button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Topics</div>
+      <button class="nav-btn" onclick="filterCards('t1')">
+        <span style="color:var(--c1)">●</span> L1 · Diagnosis
+      </button>
+      <button class="nav-btn" onclick="filterCards('t2')">
+        <span style="color:var(--c2)">●</span> L2 · Worldviews
+      </button>
+      <button class="nav-btn" onclick="filterCards('t3')">
+        <span style="color:var(--c3)">●</span> L3 · Fear & Anxiety
+      </button>
+      <button class="nav-btn" onclick="filterCards('t4')">
+        <span style="color:var(--c4)">●</span> L4 · Child Abuse
+      </button>
+    </div>
+
+    <div class="progress-section">
+      <h4>Progress Tracker</h4>
+      <div class="progress-item">
+        <div class="progress-label">
+          <span style="color:var(--c1)">Diagnosis</span>
+          <span id="p1-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill p1" id="p1-bar" style="width:0%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label">
+          <span style="color:var(--c2)">Worldviews</span>
+          <span id="p2-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill p2" id="p2-bar" style="width:0%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label">
+          <span style="color:var(--c3)">Fear &amp; Anxiety</span>
+          <span id="p3-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill p3" id="p3-bar" style="width:0%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label">
+          <span style="color:var(--c4)">Child Abuse</span>
+          <span id="p4-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill p4" id="p4-bar" style="width:0%"></div></div>
+      </div>
+      <div style="margin-top:12px; font-size:12px; color:var(--text-dim); text-align:center;">
+        <span id="total-known">0</span> / <span id="total-cards-count">0</span> cards known
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+    <div class="topbar">
+      <h2 id="view-title">Interactive Mind Map</h2>
+      <div class="topbar-meta">Lectures 1–4 · Anxiety, Worldviews, Child Abuse & Addiction</div>
+    </div>
+
+    <!-- VIEW 0: MINDMAP -->
+    <div id="view-mindmap" class="view active">
+      <div class="mindmap-wrap">
+        <svg id="mindmap-svg" viewBox="0 0 1100 700" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:80vh;min-height:500px">
+          <defs>
+            <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L6,3 z" fill="rgba(201,168,76,.4)"/>
+            </marker>
+          </defs>
+          <!-- Lines -->
+          <!-- L1 branches -->
+          <line x1="550" y1="350" x2="220" y2="180" stroke="rgba(224,122,95,.5)" stroke-width="1.5"/>
+          <line x1="220" y1="180" x2="100" y2="100" stroke="rgba(224,122,95,.3)" stroke-width="1"/>
+          <line x1="220" y1="180" x2="80" y2="200" stroke="rgba(224,122,95,.3)" stroke-width="1"/>
+          <line x1="220" y1="180" x2="110" y2="280" stroke="rgba(224,122,95,.3)" stroke-width="1"/>
+          <line x1="220" y1="180" x2="200" y2="280" stroke="rgba(224,122,95,.3)" stroke-width="1"/>
+          <!-- L2 branches -->
+          <line x1="550" y1="350" x2="820" y2="160" stroke="rgba(155,114,207,.5)" stroke-width="1.5"/>
+          <line x1="820" y1="160" x2="940" y2="80" stroke="rgba(155,114,207,.3)" stroke-width="1"/>
+          <line x1="820" y1="160" x2="990" y2="180" stroke="rgba(155,114,207,.3)" stroke-width="1"/>
+          <line x1="820" y1="160" x2="970" y2="250" stroke="rgba(155,114,207,.3)" stroke-width="1"/>
+          <line x1="820" y1="160" x2="900" y2="270" stroke="rgba(155,114,207,.3)" stroke-width="1"/>
+          <!-- L3 branches -->
+          <line x1="550" y1="350" x2="300" y2="520" stroke="rgba(224,81,81,.5)" stroke-width="1.5"/>
+          <line x1="300" y1="520" x2="130" y2="460" stroke="rgba(224,81,81,.3)" stroke-width="1"/>
+          <line x1="300" y1="520" x2="100" y2="570" stroke="rgba(224,81,81,.3)" stroke-width="1"/>
+          <line x1="300" y1="520" x2="160" y2="620" stroke="rgba(224,81,81,.3)" stroke-width="1"/>
+          <line x1="300" y1="520" x2="280" y2="640" stroke="rgba(224,81,81,.3)" stroke-width="1"/>
+          <!-- L4 branches -->
+          <line x1="550" y1="350" x2="810" y2="530" stroke="rgba(62,180,137,.5)" stroke-width="1.5"/>
+          <line x1="810" y1="530" x2="940" y2="450" stroke="rgba(62,180,137,.3)" stroke-width="1"/>
+          <line x1="810" y1="530" x2="990" y2="530" stroke="rgba(62,180,137,.3)" stroke-width="1"/>
+          <line x1="810" y1="530" x2="960" y2="620" stroke="rgba(62,180,137,.3)" stroke-width="1"/>
+          <line x1="810" y1="530" x2="870" y2="640" stroke="rgba(62,180,137,.3)" stroke-width="1"/>
+
+          <!-- Center Node -->
+          <circle cx="550" cy="350" r="54" fill="#0d1b2a" stroke="#c9a84c" stroke-width="2.5"/>
+          <text x="550" y="344" text-anchor="middle" fill="#c9a84c" font-family="Cormorant Garamond" font-size="14" font-style="italic">Psycho-</text>
+          <text x="550" y="362" text-anchor="middle" fill="#c9a84c" font-family="Cormorant Garamond" font-size="14" font-style="italic">pathology</text>
+
+          <!-- L1 Hub -->
+          <circle cx="220" cy="180" r="38" fill="rgba(224,122,95,.15)" stroke="#e07a5f" stroke-width="1.8"/>
+          <text x="220" y="175" text-anchor="middle" fill="#e07a5f" font-family="Cormorant Garamond" font-size="12.5" font-weight="600">L1 · Diagnosis</text>
+          <text x="220" y="191" text-anchor="middle" fill="#e07a5f" font-family="DM Sans" font-size="10">4 D's</text>
+          <!-- L1 leaves -->
+          <circle cx="100" cy="100" r="28" fill="rgba(224,122,95,.1)" stroke="rgba(224,122,95,.5)" stroke-width="1"/>
+          <text x="100" y="97" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Deviance</text>
+          <text x="100" y="110" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">statistical norm</text>
+          <circle cx="70" cy="200" r="28" fill="rgba(224,122,95,.1)" stroke="rgba(224,122,95,.5)" stroke-width="1"/>
+          <text x="70" y="197" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Distress</text>
+          <text x="70" y="210" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">emotional pain</text>
+          <circle cx="108" cy="283" r="28" fill="rgba(224,122,95,.1)" stroke="rgba(224,122,95,.5)" stroke-width="1"/>
+          <text x="108" y="280" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Dysfunction</text>
+          <text x="108" y="293" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">daily function</text>
+          <circle cx="196" cy="283" r="28" fill="rgba(224,122,95,.1)" stroke="rgba(224,122,95,.5)" stroke-width="1"/>
+          <text x="196" y="280" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Dangerous</text>
+          <text x="196" y="293" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">harm potential</text>
+
+          <!-- L2 Hub -->
+          <circle cx="820" cy="160" r="38" fill="rgba(155,114,207,.15)" stroke="#9b72cf" stroke-width="1.8"/>
+          <text x="820" y="155" text-anchor="middle" fill="#9b72cf" font-family="Cormorant Garamond" font-size="12.5" font-weight="600">L2 · Worldviews</text>
+          <text x="820" y="171" text-anchor="middle" fill="#9b72cf" font-family="DM Sans" font-size="10">IWF</text>
+          <!-- L2 leaves -->
+          <circle cx="940" cy="78" r="30" fill="rgba(155,114,207,.1)" stroke="rgba(155,114,207,.5)" stroke-width="1"/>
+          <text x="940" y="75" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Traditional</text>
+          <text x="940" y="88" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">community/faith</text>
+          <circle cx="992" cy="180" r="28" fill="rgba(155,114,207,.1)" stroke="rgba(155,114,207,.5)" stroke-width="1"/>
+          <text x="992" y="177" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Modern</text>
+          <text x="992" y="190" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">science/progress</text>
+          <circle cx="970" cy="252" r="30" fill="rgba(155,114,207,.1)" stroke="rgba(155,114,207,.5)" stroke-width="1"/>
+          <text x="970" y="249" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Post-Modern</text>
+          <text x="970" y="262" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">relativism</text>
+          <circle cx="896" cy="272" r="30" fill="rgba(155,114,207,.1)" stroke="rgba(155,114,207,.5)" stroke-width="1"/>
+          <text x="896" y="269" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Integrative</text>
+          <text x="896" y="282" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">holistic/spiritual</text>
+
+          <!-- L3 Hub -->
+          <circle cx="300" cy="520" r="38" fill="rgba(224,81,81,.15)" stroke="#e05151" stroke-width="1.8"/>
+          <text x="300" y="514" text-anchor="middle" fill="#e05151" font-family="Cormorant Garamond" font-size="12" font-weight="600">L3 · Fear &amp;</text>
+          <text x="300" y="530" text-anchor="middle" fill="#e05151" font-family="Cormorant Garamond" font-size="12" font-weight="600">Anxiety</text>
+          <!-- L3 leaves -->
+          <circle cx="128" cy="460" r="30" fill="rgba(224,81,81,.1)" stroke="rgba(224,81,81,.5)" stroke-width="1"/>
+          <text x="128" y="457" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="10.5">LeDoux Model</text>
+          <text x="128" y="470" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">2 pathways</text>
+          <circle cx="96" cy="566" r="28" fill="rgba(224,81,81,.1)" stroke="rgba(224,81,81,.5)" stroke-width="1"/>
+          <text x="96" y="563" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="10.5">Fear Cond.</text>
+          <text x="96" y="576" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">UCS model</text>
+          <circle cx="160" cy="624" r="28" fill="rgba(224,81,81,.1)" stroke="rgba(224,81,81,.5)" stroke-width="1"/>
+          <text x="160" y="621" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="10.5">DSM-5</text>
+          <text x="160" y="634" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">5 disorders</text>
+          <circle cx="278" cy="641" r="28" fill="rgba(224,81,81,.1)" stroke="rgba(224,81,81,.5)" stroke-width="1"/>
+          <text x="278" y="638" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="10.5">SAD / GAD</text>
+          <text x="278" y="651" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">92% bullying</text>
+
+          <!-- L4 Hub -->
+          <circle cx="810" cy="530" r="38" fill="rgba(62,180,137,.15)" stroke="#3eb489" stroke-width="1.8"/>
+          <text x="810" y="524" text-anchor="middle" fill="#3eb489" font-family="Cormorant Garamond" font-size="12" font-weight="600">L4 · Child Abuse</text>
+          <text x="810" y="540" text-anchor="middle" fill="#3eb489" font-family="Cormorant Garamond" font-size="12" font-weight="600">&amp; Addiction</text>
+          <!-- L4 leaves -->
+          <circle cx="942" cy="450" r="30" fill="rgba(62,180,137,.1)" stroke="rgba(62,180,137,.5)" stroke-width="1"/>
+          <text x="942" y="447" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="10.5">Types of Abuse</text>
+          <text x="942" y="460" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">4 categories</text>
+          <circle cx="994" cy="528" r="30" fill="rgba(62,180,137,.1)" stroke="rgba(62,180,137,.5)" stroke-width="1"/>
+          <text x="994" y="525" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="10.5">Recognition</text>
+          <text x="994" y="538" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">signals vary</text>
+          <circle cx="958" cy="622" r="30" fill="rgba(62,180,137,.1)" stroke="rgba(62,180,137,.5)" stroke-width="1"/>
+          <text x="958" y="619" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="10.5">Brain Disease</text>
+          <text x="958" y="632" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">3 circuits</text>
+          <circle cx="868" cy="644" r="30" fill="rgba(62,180,137,.1)" stroke="rgba(62,180,137,.5)" stroke-width="1"/>
+          <text x="868" y="641" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="10.5">Behaviour</text>
+          <text x="868" y="654" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">intern./extern.</text>
+        </svg>
+      </div>
+      <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--text-dim)">
+        Interactive mind map — click a topic pill below to jump to Concept Cards for that lecture
+      </p>
+      <div class="topic-filter" style="justify-content:center;margin-top:12px">
+        <span class="topic-pill t1 active" onclick="jumpTo('t1')">● L1 Diagnosis</span>
+        <span class="topic-pill t2" onclick="jumpTo('t2')">● L2 Worldviews</span>
+        <span class="topic-pill t3" onclick="jumpTo('t3')">● L3 Fear &amp; Anxiety</span>
+        <span class="topic-pill t4" onclick="jumpTo('t4')">● L4 Child Abuse</span>
+      </div>
+    </div>
+
+    <!-- VIEW 1: CONCEPT CARDS -->
+    <div id="view-cards" class="view">
+      <div class="topic-filter">
+        <span class="topic-pill all active" onclick="filterCards('all', this)">All Topics</span>
+        <span class="topic-pill t1" onclick="filterCards('t1', this)">L1 · Diagnosis &amp; 4D's</span>
+        <span class="topic-pill t2" onclick="filterCards('t2', this)">L2 · Worldviews</span>
+        <span class="topic-pill t3" onclick="filterCards('t3', this)">L3 · Fear &amp; Anxiety</span>
+        <span class="topic-pill t4" onclick="filterCards('t4', this)">L4 · Child Abuse &amp; Addiction</span>
+      </div>
+      <div class="cards-grid" id="cards-grid">
+        <!-- Cards injected by JS -->
+      </div>
+    </div>
+
+    <!-- VIEW 2: FLASHCARDS -->
+    <div id="view-flashcards" class="view">
+      <div class="flashcard-controls">
+        <button class="fc-btn" onclick="shuffleFC()">🔀 Shuffle</button>
+        <button class="fc-btn" onclick="filterFC('all')">All Topics</button>
+        <button class="fc-btn" onclick="filterFC('t1')" style="color:var(--c1);border-color:var(--c1)">L1</button>
+        <button class="fc-btn" onclick="filterFC('t2')" style="color:var(--c2);border-color:var(--c2)">L2</button>
+        <button class="fc-btn" onclick="filterFC('t3')" style="color:var(--c3);border-color:var(--c3)">L3</button>
+        <button class="fc-btn" onclick="filterFC('t4')" style="color:var(--c4);border-color:var(--c4)">L4</button>
+        <button class="fc-btn primary" onclick="resetFC()">↺ Reset</button>
+        <div class="fc-progress-info">Known: <span id="fc-known-count">0</span> / <span id="fc-total">0</span></div>
+      </div>
+      <div class="flashcard-arena">
+        <div class="fc-scene" onclick="flipCard()">
+          <div class="fc-card-inner" id="fc-inner">
+            <div class="fc-face fc-front" id="fc-front">
+              <div class="fc-topic-badge" id="fc-badge"></div>
+              <div class="fc-question" id="fc-question"></div>
+              <div class="fc-hint">Tap to reveal answer →</div>
+            </div>
+            <div class="fc-face fc-back" id="fc-back">
+              <div class="fc-topic-badge" id="fc-badge-back"></div>
+              <div class="fc-answer" id="fc-answer"></div>
+            </div>
+          </div>
+        </div>
+        <div class="fc-nav">
+          <button class="fc-nav-btn" onclick="prevFC()">←</button>
+          <div class="fc-counter"><span id="fc-idx">1</span> / <span id="fc-of">0</span></div>
+          <button class="fc-nav-btn" onclick="nextFC()">→</button>
+        </div>
+        <div class="fc-score-row">
+          <button class="fc-score-btn fc-know" onclick="markKnow()">✓ Know it</button>
+          <button class="fc-score-btn fc-unsure" onclick="markUnsure()">✗ Review again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: VISUAL REFERENCES -->
+    <div id="view-visuals" class="view">
+      <!-- Fear vs Anxiety Table -->
+      <div class="vr-section">
+        <div class="section-hdr">
+          <span class="lec-badge" style="background:var(--c3-dim);color:var(--c3)">Lecture 3</span>
+          <h2>Fear vs. Anxiety — Comparison</h2>
+        </div>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th style="color:var(--c3)">Anxiety</th>
+              <th style="color:var(--gold)">Fear</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Anticipation of <em>potential</em> threat</td><td>Specific fear response</td></tr>
+            <tr><td>General feeling of apprehension about <em>possible</em> danger</td><td>Distinct threat — imminent and identified</td></tr>
+            <tr><td>Future-oriented and diffuse</td><td>Selective attention to threat</td></tr>
+            <tr><td>Hypervigilance and diffuse hyperarousal</td><td>Mobilization: HR acceleration, elevated blood pressure, etc.</td></tr>
+            <tr><td>Complex mixture of aversive emotions and cognitions</td><td>Fight-and-flight response</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- DSM-5 Anxiety Disorders -->
+      <div class="vr-section">
+        <div class="section-hdr">
+          <span class="lec-badge" style="background:var(--c3-dim);color:var(--c3)">Lecture 3</span>
+          <h2>DSM-5 Anxiety Disorders</h2>
+        </div>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th style="color:var(--c3)">Disorder</th>
+              <th style="color:var(--gold)">Key Features</th>
+              <th style="color:var(--cream-dim)">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Specific Phobia</td><td>Fear linked to specific stimulus; fear conditioning model</td><td><span class="stat-chip">Adult</span></td></tr>
+            <tr><td>Social Anxiety Disorder (SAD)</td><td>Fear of social situations; enhanced conditionability; attentional bias</td><td><span class="stat-chip">Adult</span></td></tr>
+            <tr><td>Panic Disorder (PD)</td><td>Recurrent unexpected panic attacks; context conditioning model</td><td><span class="stat-chip">Adult</span></td></tr>
+            <tr><td>Agoraphobia</td><td>Avoidance of situations where escape may be difficult</td><td><span class="stat-chip">Adult</span></td></tr>
+            <tr><td>Generalised Anxiety Disorder (GAD)</td><td>Excessive, difficult-to-control worry; chronic</td><td><span class="stat-chip">Adult</span></td></tr>
+            <tr><td>Separation Anxiety Disorder</td><td>Excessive fear about separation from attachment figures</td><td><span class="stat-chip" style="background:var(--c2-dim);color:var(--c2)">Children</span></td></tr>
+            <tr><td>Selective Mutism</td><td>Failure to speak in specific social situations</td><td><span class="stat-chip" style="background:var(--c2-dim);color:var(--c2)">Children</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Behavioural Problems Table -->
+      <div class="vr-section">
+        <div class="section-hdr">
+          <span class="lec-badge" style="background:var(--c4-dim);color:var(--c4)">Lecture 4</span>
+          <h2>Behavioural Problems in Child Abuse</h2>
+        </div>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th style="color:var(--c2)">Internalising</th>
+              <th style="color:var(--c3)">Externalising</th>
+              <th style="color:var(--c4)">Related Disorders</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>• Fear of failure<br>• Low self-image<br>• Depressed, sad, withdrawn<br>• Passive<br>• Nervous / scared<br>• Apathy</td>
+              <td>• Hyperactive<br>• Destructive<br>• Aggressive</td>
+              <td>• Substance use<br>• Eating disorders<br>• Self-harm<br>• Suicidal ideation</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Worldview Framework -->
+      <div class="vr-section">
+        <div class="section-hdr">
+          <span class="lec-badge" style="background:var(--c2-dim);color:var(--c2)">Lecture 2</span>
+          <h2>The Four Worldviews — Integrative Framework</h2>
+        </div>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th style="color:var(--c2)">Worldview</th>
+              <th>Reality</th>
+              <th>Knowledge</th>
+              <th>Values</th>
+              <th>Identity</th>
+              <th>MH Impact (+)</th>
+              <th>MH Impact (−)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong style="color:var(--c2)">Traditional</strong></td>
+              <td>Sacred / moral order</td>
+              <td>Religious texts, tradition</td>
+              <td>Community, faith, hierarchy</td>
+              <td>Role in community</td>
+              <td>Social belonging</td>
+              <td>Rigid norms</td>
+            </tr>
+            <tr>
+              <td><strong style="color:var(--c2)">Modern</strong></td>
+              <td>Material reality (measurable)</td>
+              <td>Science, rationality, empirical evidence</td>
+              <td>Progress, autonomy, success, freedom</td>
+              <td>Independent, rational, autonomous</td>
+              <td>Scientific treatment advances; reduced stigma; individual rights</td>
+              <td>Materialism → lower life satisfaction; Individualism → isolation/anxiety; Secularism → existential anxiety</td>
+            </tr>
+            <tr>
+              <td><strong style="color:var(--c2)">Post-Modern</strong></td>
+              <td>Socially constructed</td>
+              <td>Narrative, discourse</td>
+              <td>Diversity, relativism, deconstruction</td>
+              <td>Fluid, contextual</td>
+              <td>Validates diverse experience</td>
+              <td>Nihilism, meaning crisis</td>
+            </tr>
+            <tr>
+              <td><strong style="color:var(--c2)">Integrative</strong></td>
+              <td>Unified whole — mental + physical + spiritual</td>
+              <td>Science + experience + spirituality</td>
+              <td>Wholeness, interconnection, inner harmony, wisdom</td>
+              <td>Interdependent self seeking growth &amp; self-actualisation</td>
+              <td>Holistic spirituality → better MH; self-transcendence → reduced symptoms; balance &amp; connectedness → resilience</td>
+              <td>Spiritual crises possible; integration challenges in healthcare</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- LeDoux Pathway Diagram -->
+      <div class="vr-section">
+        <div class="section-hdr">
+          <span class="lec-badge" style="background:var(--c3-dim);color:var(--c3)">Lecture 3</span>
+          <h2>LeDoux's Two-Pathway Model of Fear</h2>
+        </div>
+        <div class="diagram-card">
+          <svg viewBox="0 0 700 220" style="width:100%;max-height:200px">
+            <!-- Low Road -->
+            <rect x="20" y="30" width="130" height="50" rx="8" fill="rgba(224,81,81,.15)" stroke="#e05151" stroke-width="1.5"/>
+            <text x="85" y="51" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="12">Sensory Stimulus</text>
+            <text x="85" y="67" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="10">(CS / Threat Cue)</text>
+            <!-- Arrow to Thalamus -->
+            <line x1="150" y1="55" x2="220" y2="55" stroke="rgba(224,81,81,.7)" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <rect x="220" y="30" width="110" height="50" rx="8" fill="rgba(155,114,207,.15)" stroke="#9b72cf" stroke-width="1.5"/>
+            <text x="275" y="58" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="12.5">Thalamus</text>
+            <!-- Low road -->
+            <line x1="330" y1="55" x2="390" y2="90" stroke="#e05151" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#arrow)"/>
+            <text x="348" y="82" fill="#e05151" font-family="DM Sans" font-size="10">LOW ROAD</text>
+            <text x="344" y="95" fill="#8a9bb0" font-family="DM Sans" font-size="9">(fast, unconscious)</text>
+            <!-- High road -->
+            <line x1="330" y1="45" x2="390" y2="20" stroke="var(--gold)" stroke-width="2" marker-end="url(#arrow)"/>
+            <text x="340" y="18" fill="var(--gold)" font-family="DM Sans" font-size="10">HIGH ROAD</text>
+            <text x="340" y="32" fill="#8a9bb0" font-family="DM Sans" font-size="9">(slow, conscious)</text>
+            <!-- Cortex -->
+            <rect x="390" y="0" width="130" height="50" rx="8" fill="rgba(201,168,76,.12)" stroke="var(--gold)" stroke-width="1.5"/>
+            <text x="455" y="21" text-anchor="middle" fill="var(--gold)" font-family="DM Sans" font-size="11.5">Sensory Cortex</text>
+            <text x="455" y="37" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">Visual / Auditory</text>
+            <line x1="520" y1="25" x2="560" y2="65" stroke="var(--gold)" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <!-- Amygdala -->
+            <rect x="390" y="80" width="130" height="55" rx="8" fill="rgba(224,81,81,.2)" stroke="#e05151" stroke-width="2"/>
+            <text x="455" y="103" text-anchor="middle" fill="#e05151" font-family="Cormorant Garamond" font-size="14" font-style="italic">Amygdala</text>
+            <text x="455" y="120" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">emotional fear response</text>
+            <!-- Response -->
+            <line x1="520" y1="107" x2="580" y2="107" stroke="rgba(224,81,81,.7)" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <rect x="580" y="80" width="110" height="55" rx="8" fill="rgba(224,81,81,.1)" stroke="rgba(224,81,81,.5)" stroke-width="1.5"/>
+            <text x="635" y="101" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Fear Response</text>
+            <text x="635" y="117" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">startle, freeze,</text>
+            <text x="635" y="129" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="9.5">HR↑, sweat</text>
+            <!-- Labels -->
+            <text x="20" y="175" fill="#8a9bb0" font-family="DM Sans" font-size="10.5" font-style="italic">Visual Cortex Lesion → fast pathway intact → fear response preserved (startle blink response still strong)</text>
+            <text x="20" y="195" fill="#8a9bb0" font-family="DM Sans" font-size="10.5" font-style="italic">Amygdala Lesion → declarative knowledge intact, BUT fear-potentiated startle ABSENT</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- SAD Stats -->
+      <div class="vr-section">
+        <div class="section-hdr">
+          <span class="lec-badge" style="background:var(--c3-dim);color:var(--c3)">Lecture 3</span>
+          <h2>Social Anxiety Disorder — Key Statistics</h2>
+        </div>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th style="color:var(--c3)">Statistic</th>
+              <th>Finding</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="stat-chip">≈60%</span></td>
+              <td>of SAD patients remember traumatic social experiences</td>
+              <td>Öst &amp; Hughdal (1981); Townsley et al. (1995)</td>
+            </tr>
+            <tr>
+              <td><span class="stat-chip">92%</span></td>
+              <td>of adult SAD patients report bullying experience in childhood</td>
+              <td>McCabe et al. (2003)</td>
+            </tr>
+            <tr>
+              <td><span class="stat-chip">35%</span></td>
+              <td>of OCD patients report bullying (comparison group)</td>
+              <td>McCabe et al. (2003)</td>
+            </tr>
+            <tr>
+              <td>Parenting</td>
+              <td>Adult SAD patients more frequently had parents who were socially isolated and avoided social contacts</td>
+              <td>Literature review</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Addiction Brain Circuits -->
+      <div class="vr-section">
+        <div class="section-hdr">
+          <span class="lec-badge" style="background:var(--c4-dim);color:var(--c4)">Lecture 4</span>
+          <h2>Addiction as Brain Disease — Three Circuits</h2>
+        </div>
+        <div class="diagram-card">
+          <svg viewBox="0 0 660 160" style="width:100%;max-height:160px">
+            <rect x="20" y="30" width="170" height="80" rx="10" fill="rgba(62,180,137,.15)" stroke="#3eb489" stroke-width="1.8"/>
+            <text x="105" y="58" text-anchor="middle" fill="#3eb489" font-family="Cormorant Garamond" font-size="15" font-style="italic">Basal Ganglia</text>
+            <text x="105" y="78" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Reward / "GO" signal</text>
+            <text x="105" y="96" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="10">⬆ OVERACTIVATED</text>
+            <!-- arrow -->
+            <text x="238" y="75" text-anchor="middle" fill="#e07a5f" font-family="DM Sans" font-size="20" font-weight="700">+</text>
+            <rect x="260" y="30" width="150" height="80" rx="10" fill="rgba(224,122,95,.15)" stroke="#e07a5f" stroke-width="1.8"/>
+            <text x="335" y="58" text-anchor="middle" fill="#e07a5f" font-family="Cormorant Garamond" font-size="15" font-style="italic">Amygdala</text>
+            <text x="335" y="78" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Stress / "ALARM" signal</text>
+            <text x="335" y="96" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="10">⬆ OVERACTIVATED</text>
+            <!-- arrow -->
+            <text x="452" y="75" text-anchor="middle" fill="var(--text-dim)" font-family="DM Sans" font-size="20">vs.</text>
+            <rect x="475" y="30" width="165" height="80" rx="10" fill="rgba(201,168,76,.12)" stroke="var(--gold)" stroke-width="1.8"/>
+            <text x="557" y="58" text-anchor="middle" fill="var(--gold)" font-family="Cormorant Garamond" font-size="14" font-style="italic">Prefrontal Cortex</text>
+            <text x="557" y="75" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="11">Control / "BRAKE"</text>
+            <text x="557" y="95" text-anchor="middle" fill="#8a9bb0" font-family="DM Sans" font-size="10">⬇ WEAKENED</text>
+            <text x="330" y="148" text-anchor="middle" fill="#ddd6c8" font-family="DM Sans" font-size="10.5">→ Compulsive habit-driven substance use</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: MCQ -->
+    <div id="view-mcq" class="view">
+      <div class="mcq-section">
+        <h3>Multiple Choice Practice Questions</h3>
+        <div id="mcq-container">
+          <!-- MCQ injected by JS -->
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ========== DATA ==========
+const topics = {
+  t1: { label: 'L1 · Diagnosis', color: 'var(--c1)' },
+  t2: { label: 'L2 · Worldviews', color: 'var(--c2)' },
+  t3: { label: 'L3 · Fear & Anxiety', color: 'var(--c3)' },
+  t4: { label: 'L4 · Child Abuse', color: 'var(--c4)' },
+};
+
+const cards = [
+  // ===== L1: DIAGNOSIS =====
+  {
+    id:'c01', topic:'t1', title:'The 4 D\'s of Psychological Disorder',
+    def:'A framework of four criteria — <b>Deviance, Distress, Dysfunction, Dangerous</b> — used to decide whether a behaviour or feeling constitutes a psychological disorder.',
+    exp:'No single criterion is sufficient on its own. Decisions always involve <b>social judgements based on values and expectations of a society</b>. Each D has limitations such as arbitrary cut-points, subjectivity, or varying cultural relevance.',
+    ex:'A person experiencing intense grief after bereavement may show Distress, but this does not alone make it a disorder — cultural context and duration matter.',
+    eq:'What are the 4 D\'s of psychopathology and why is no single D sufficient?',
+    ea:'The 4 D\'s are Deviance (departure from statistical or social norms), Distress (emotional/physical pain from the behaviour), Dysfunction (interference with daily functioning), and Dangerous (potential harm to self or others). No single D is sufficient because cut-points are arbitrary, distress is highly subjective, not all disorders involve danger, and deviance alone reflects social judgement. A diagnosis requires integrating all four criteria within cultural context.'
+  },
+  {
+    id:'c02', topic:'t1', title:'Deviance',
+    def:'A diagnostic criterion asking whether the behaviour departs from a <b>statistical norm</b> or <b>social norm</b>.',
+    exp:'<b>Limitations:</b> Deviance alone is not sufficient — many statistically rare behaviours (e.g., genius) are not disorders. Cut-points are arbitrary (e.g., where exactly does "very anxious" become a disorder?). Deviance is also culturally relative.',
+    ex:'Being extremely introverted is statistically deviant but not necessarily a disorder.',
+    eq:'Why is deviance alone an insufficient criterion for diagnosis?',
+    ea:'Deviance is insufficient because statistical rarity does not equal pathology — exceptional talent is also rare. Cut-points are arbitrary, and what is deviant in one culture may be normal in another (cultural relativism of norms). Diagnosis requires distress or dysfunction alongside deviance.'
+  },
+  {
+    id:'c03', topic:'t1', title:'Distress',
+    def:'A diagnostic criterion indicating that <b>behaviours or feelings cause emotional or physical pain</b>. It is an important criterion for most psychiatric diagnoses.',
+    exp:'<b>Limitations:</b> Neither sufficient nor necessary — some serious disorders (e.g., mania in early stages) may not be experienced as distressing. Very subjective — individuals vary in tolerance and willingness to report pain.',
+    ex:'A person with OCD experiences significant distress from intrusive thoughts, making distress a relevant criterion.',
+    eq:'Is distress a necessary criterion for psychiatric diagnosis? Explain.',
+    ea:'No. While distress is important and included in most psychiatric diagnoses, it is neither sufficient nor necessary. Some conditions — such as early-stage mania or certain personality disorders — may not produce subjective distress in the individual, even though they cause significant impairment. Additionally, distress is very subjective and influenced by factors such as stigma and cultural background, making it unreliable as a sole criterion.'
+  },
+  {
+    id:'c04', topic:'t1', title:'Dysfunction',
+    def:'A criterion indicating that <b>behaviours and feelings interfere with a person\'s ability to function in daily life</b>.',
+    exp:'<b>Limitations:</b> "Sufficient" functioning is arbitrary and culturally defined. What counts as impaired functioning varies by occupation, culture, and societal demands. Deviance alone is not sufficient even within this criterion.',
+    ex:'A person with severe social anxiety cannot attend work meetings or form relationships — this functional impairment supports a diagnosis of SAD.',
+    eq:'How does dysfunction differ from distress as a diagnostic criterion?',
+    ea:'Distress refers to the subjective experience of pain or suffering, while dysfunction refers to objective impairment in the ability to perform daily life activities (work, relationships, self-care). Dysfunction is generally considered a more objective measure, but both criteria are limited: dysfunction cut-points are culturally arbitrary, and distress is highly subjective. A comprehensive diagnosis uses both together with context.'
+  },
+  {
+    id:'c05', topic:'t1', title:'Dangerous',
+    def:'A criterion indicating behaviours/feelings <b>potentially harmful for oneself or others</b>.',
+    exp:'<b>Limitations:</b> Threshold is arbitrary. This criterion is less common in mental disorders than the others — most mental disorders do not involve danger. Over-reliance on this criterion can contribute to stigma around mental illness.',
+    ex:'Active suicidal ideation with a plan meets the Dangerous criterion.',
+    eq:'Why should "dangerous" not be the primary criterion for identifying mental disorders?',
+    ea:'Because most mental disorders do not involve danger to self or others. Over-emphasising dangerousness pathologises only the most severe presentations, misses many people who need help, and contributes to public stigma that associates mental illness with violence. The dangerous criterion has an arbitrary threshold and must be considered alongside Deviance, Distress, and Dysfunction.'
+  },
+  {
+    id:'c06', topic:'t1', title:'Cultural & Societal Considerations in Diagnosis',
+    def:'A set of contextual factors that must be integrated when applying diagnostic criteria, including <b>time, culture, stigma, heterogeneity, and changing theories</b>.',
+    exp:'Key considerations: (1) <b>Time and culture</b> — norms change over time; (2) <b>Cultural expression of symptoms</b> — different cultural expressions of a single underlying disorder; (3) <b>Stigma</b> — affects people\'s willingness to admit behaviours and feelings; (4) <b>Heterogeneity</b> — people with the same disorder can be very different; (5) <b>Acceptable treatments</b> vary by culture; (6) <b>Theories and frameworks change</b>.',
+    ex:'Homosexuality was in the DSM as a disorder until 1973 — illustrating how time and cultural values shape diagnoses.',
+    eq:'How do cultural factors complicate the application of the 4 D\'s?',
+    ea:'Cultural factors complicate diagnosis in several ways: What is "deviant" differs across cultures (e.g., hearing ancestral voices in some cultures is not pathological). Cultural expression of symptoms varies (e.g., "somatisation" of depression in some Asian cultures). Stigma reduces willingness to report distress. Cultural norms determine what constitutes adequate functioning. Clinicians must always interpret the 4 D\'s within the cultural and historical context of the individual.'
+  },
+  // ===== L2: WORLDVIEWS =====
+  {
+    id:'c07', topic:'t2', title:'Worldviews — Definition',
+    def:'<b>Comprehensive frameworks of meaning</b> through which people understand reality, knowledge, values, identity, and society.',
+    exp:'Everyone has a worldview — often implicit. Worldviews are shaped by culture, upbringing, and experience. They influence how we interpret everything, including mental health. No worldview is \'better\' — each has strengths and limitations. They were largely unexplored in mental health research until the development of the Integrative Worldview Framework (IWF).',
+    ex:'A person with a Traditional worldview might interpret depression as a spiritual crisis requiring prayer, while a person with a Modern worldview might seek medication.',
+    eq:'What is a worldview and why is it clinically relevant in psychopathology?',
+    ea:'A worldview is a comprehensive framework of meaning through which a person understands reality, knowledge, values, identity, and society. It is clinically relevant because worldviews shape how patients understand, experience, express, and respond to mental health symptoms and treatments. For example, a person\'s worldview determines whether they attribute symptoms to biological causes, spiritual disturbances, or social injustice, and which treatments they consider acceptable. Clinicians who ignore worldview risk misdiagnosis and poor therapeutic alliance.'
+  },
+  {
+    id:'c08', topic:'t2', title:'The Integrative Worldview Framework (IWF)',
+    def:'A framework that <b>synthesises worldview research</b> from psychology, sociology, philosophy, and environmental sciences to operationalise and categorise worldviews for scientific study.',
+    exp:'The IWF identifies <b>four worldviews</b>: Traditional, Modern, Post-Modern, and Integrative. It allows for scientific categorisation, study, and comparison. Worldviews were previously thought difficult to categorise and largely unexplored in mental health research.',
+    ex:'The IWF enables researchers to compare how people with Modern vs. Integrative worldviews experience depression, enabling cross-cultural mental health research.',
+    eq:'What is the purpose of the Integrative Worldview Framework and what four worldviews does it identify?',
+    ea:'The IWF was developed to operationalise the concept of "worldview" for scientific research by synthesising work from psychology, sociology, philosophy, and environmental sciences. It identifies four worldviews: (1) Traditional — community-oriented, faith-based; (2) Modern — materialist, scientific, individualist; (3) Post-Modern — relativist, socially constructed reality; (4) Integrative — holistic, combining science, experience, and spirituality. This framework allows researchers to systematically study how worldviews relate to mental health outcomes.'
+  },
+  {
+    id:'c09', topic:'t2', title:'Modern Worldview (MWV)',
+    def:'A worldview characterised by <b>material reality, scientific/empirical knowledge, values of progress and individual autonomy, an independent rational self, and a democratic/technological society</b>.',
+    exp:'<b>Relationship to mental health (+):</b> Scientific treatment advances; reduced stigma through medicalisation; respect for individual rights. <b>Relationship to mental health (−):</b> Materialism → lower life satisfaction; Individualism → social isolation, anxiety; Secularism → existential anxiety.',
+    ex:'A person holding an MWV who experiences burnout may seek CBT or medication, value rational self-improvement, but may struggle with existential meaning in a secular framework.',
+    eq:'Describe the Modern Worldview and its contradictory effects on mental health.',
+    ea:'The Modern Worldview holds that reality is material and measurable, knowledge comes from empirical science and rational thought, and core values include individual freedom, progress, and success. Positive effects on MH include scientific treatment advances, reduced stigma via medicalisation, and protection of individual rights. Negative effects include: materialism correlates with lower life satisfaction; individualism leads to social isolation and anxiety; secularism can produce existential anxiety when traditional sources of meaning are absent.'
+  },
+  {
+    id:'c10', topic:'t2', title:'Integrative Worldview (IWV)',
+    def:'A worldview holding that reality is a <b>unified whole — mental, physical, AND spiritual</b>, that knowledge comes from multiple sources (science + experience + spirituality), and that identity is an <b>interdependent self seeking growth and self-actualisation</b>.',
+    exp:'<b>MH (+):</b> Holistic spirituality → better mental health; self-transcendence → reduced symptoms; balance & connectedness → resilience. <b>MH (−):</b> Spiritual crises possible; integration challenges in healthcare.',
+    ex:'An IWV individual experiencing anxiety might combine mindfulness, community support, and therapy, drawing on multiple ways of knowing.',
+    eq:'How does the Integrative Worldview differ from the Modern Worldview, and what are its mental health implications?',
+    ea:'Unlike the Modern Worldview, the IWV holds that reality encompasses mental, physical, AND spiritual dimensions, not just material ones. Knowledge is not limited to empirical science but also includes personal experience and spiritual insight. The IWV identity is interdependent and seeks wholeness, contrasting with the autonomous rational self of modernity. MH benefits include holistic spirituality improving mental health outcomes, self-transcendence reducing symptoms, and balance/connectedness building resilience. Challenges include possible spiritual crises and difficulty integrating spiritual approaches in conventional healthcare settings.'
+  },
+  {
+    id:'c11', topic:'t2', title:'Is Depression Universal?',
+    def:'A key question in cross-cultural psychology: while the <b>suffering in depression is universal</b>, its meaning, experience, and response depend on worldview.',
+    exp:'Depression illustrates how worldview shapes the entire encounter with mental illness: how symptoms are expressed (biological vs. spiritual vs. social framing), how causes are attributed, which treatments are sought, and whether recovery is conceptualised as returning to function or transformation. Cultural expressions of a single underlying disorder differ.',
+    ex:'"The suffering is universal. The meaning, experience, and response... depends on worldview." — Lecture 2 conclusion.',
+    eq:'Explain what the statement "Is depression universal?" reveals about the role of worldview in psychopathology.',
+    ea:'The question reveals that while the physiological and emotional core of depression (suffering) may be universal, the phenomenological experience, cultural expression, causal attribution, and preferred treatment vary across worldviews. In a Traditional worldview, depression may be framed as spiritual abandonment; in a Modern worldview, as a neurochemical imbalance; in an Integrative worldview, as a disconnection from wholeness. This demonstrates that diagnosis and treatment cannot be separated from the patient\'s worldview, and clinicians must be worldview-sensitive for effective care.'
+  },
+  // ===== L3: FEAR & ANXIETY =====
+  {
+    id:'c12', topic:'t3', title:'Fear vs. Anxiety — Core Distinction',
+    def:'<b>Anxiety</b> is a future-oriented, diffuse anticipation of a potential threat with hypervigilance. <b>Fear</b> is a specific, immediate response to an identified, imminent threat involving mobilisation and fight-or-flight.',
+    exp:'Anxiety: general apprehension, diffuse hyperarousal, complex mixture of aversive emotions and cognitions, no specific threat identified. Fear: distinct threat identified, selective attention to threat, physiological mobilisation (HR acceleration, elevated BP), fight-or-flight response.',
+    ex:'Worrying before an exam = anxiety (diffuse, future-oriented). Jumping when a car backfires = fear (specific, immediate).',
+    eq:'Distinguish between fear and anxiety, noting the key differences in orientation, specificity, and physiological response.',
+    ea:'Fear is a specific response to an identified, imminent threat. It involves selective attention, mobilisation (HR↑, BP↑), and a fight-or-flight response. Anxiety is future-oriented and diffuse — a general feeling of apprehension about possible danger. It involves hypervigilance, diffuse hyperarousal, and a complex mixture of aversive emotions and cognitions without a specific identifiable threat. Both are adaptive in normal ranges but can become pathological when excessive or disproportionate.'
+  },
+  {
+    id:'c13', topic:'t3', title:'Fear Conditioning as an Experimental Model',
+    def:'A laboratory model in which a <b>neutral stimulus (CS)</b> is repeatedly paired with an aversive <b>unconditioned stimulus (UCS)</b>, resulting in a learned fear response — used to study the development and maintenance of anxiety disorders.',
+    exp:'Applications: <b>Fear conditioning → specific phobias</b>; <b>Context conditioning → panic disorder</b>. Advantages: (1) Source of threat is known (UCS); (2) Systematic research on the development of fear reaction and extinction. Startle reflex measured via <b>electromyography (EMG)</b>.',
+    ex:'A dog bite (UCS) paired with the sight of dogs (CS) leads to conditioned fear of all dogs — a model for specific phobia development.',
+    eq:'How does fear conditioning serve as an experimental model for anxiety disorders? Give two clinical applications.',
+    ea:'Fear conditioning pairs a previously neutral CS with an aversive UCS until the CS alone elicits fear. This is experimentally advantageous because the source of threat is controlled and known (UCS), enabling systematic study of fear acquisition and extinction. Clinically: (1) Fear conditioning models specific phobias — where a stimulus becomes a conditioned fear cue; (2) Context conditioning models panic disorder — where the context/environment itself becomes conditioned to elicit anxiety/panic. Extinction learning (the basis of exposure therapy) is also studied within this framework.'
+  },
+  {
+    id:'c14', topic:'t3', title:'LeDoux\'s Two-Pathway Model of Fear',
+    def:'A neurobiological model proposing two pathways for fear processing: the <b>fast "low road" (thalamus → amygdala direct)</b> and the <b>slow "high road" (thalamus → cortex → amygdala)</b>.',
+    exp:'<b>Low road (fast, unconscious):</b> Sensory input travels directly from the thalamus to the amygdala without cortical processing — explains how we respond to threats before consciously identifying them. <b>High road (slow, conscious):</b> Full cortical processing before reaching the amygdala. <b>Evidence:</b> Visual cortex lesion patients: fast pathway intact — startle blink response still potentiated by CS. Amygdala lesion patients: declarative knowledge of danger intact, but fear-potentiated startle absent. Conclusion: conscious knowledge and automatic fear responses are partially separate neural pathways.',
+    ex:'You flinch at a moving shadow before recognising it\'s just leaves blowing — this is the low road operating faster than conscious recognition.',
+    eq:'Describe LeDoux\'s two-pathway model and the lesion evidence supporting it.',
+    ea:'LeDoux proposed two pathways for processing threatening stimuli. The low road (fast, unconscious): thalamus → amygdala directly, bypassing cortical processing — enables immediate fear responses before conscious recognition. The high road (slow, conscious): thalamus → sensory cortex → amygdala — allows full evaluation but is slower. Lesion evidence: (1) Visual cortex lesion patients still showed fear-potentiated startle to a CS, demonstrating the low road is intact even without cortical processing. (2) Amygdala lesion patients retained declarative knowledge of the danger (high road intact) but lost automatic fear-potentiated startle, demonstrating the amygdala is necessary for automatic emotional fear responses. Together, this supports partially separate neural systems for knowing and feeling fear.'
+  },
+  {
+    id:'c15', topic:'t3', title:'Social Anxiety Disorder (SAD) — Learning Mechanisms',
+    def:'SAD develops partly through learning: <b>social defeats, embarrassment, and bullying</b> serve as unconditioned stimuli (UCS) that condition fear to social cues.',
+    exp:'Key statistics: <span class="stat-chip">≈60%</span> of SAD patients remember traumatic social experiences (Öst & Hughdal, 1981; Townsley et al., 1995). <span class="stat-chip">92%</span> of adult SAD patients report bullying in childhood vs. <span class="stat-chip">35%</span> of OCD patients (McCabe et al., 2003). Adult SAD patients also more frequently had socially isolated parents who avoided social contacts. SAD involves <b>enhanced conditionability with socially relevant UCS</b> — social stimuli (criticism, rejection, angry faces) serve as especially potent UCS.',
+    ex:'A child repeatedly bullied (UCS) in front of peers develops conditioned fear to social evaluation cues generally — modelling SAD acquisition.',
+    eq:'What learning mechanisms underlie SAD and what statistical evidence supports a social conditioning model?',
+    ea:'SAD is maintained by learning processes in which social defeats, embarrassments, and bullying act as UCS that condition fear to social cues (CS). Evidence: ~60% of SAD patients report traumatic social experiences (Öst & Hughdal, 1981; Townsley et al., 1995); 92% of adult SAD patients report childhood bullying vs. only 35% of OCD patients (McCabe et al., 2003). Adults with SAD more often had socially isolated parents (observational learning and modelling). SAD is also characterised by enhanced conditionability — they form fear associations more readily when UCS is socially relevant (criticism, rejection, angry faces), and show attentional bias: sustained attention to threatening (angry) faces vs. lower-SA individuals who attend more to happy faces.'
+  },
+  {
+    id:'c16', topic:'t3', title:'Attentional Bias in SAD',
+    def:'People with social anxiety <b>pay more attention, and earlier attention, to threatening social cues</b>, especially angry faces — a cognitive bias maintaining the disorder.',
+    exp:'Demonstrated by flickering stimuli paradigm: faces flicker at different frequencies (e.g., 17.5 Hz and 14.0 Hz), each appearing for 3000 ms. Brain activity at specific frequencies reveals where attention is directed. <b>HSA (High Social Anxiety):</b> sustained attention to threat (angry) faces. <b>LSA (Low Social Anxiety):</b> attend more to happy faces. Conclusion: "Socially anxious students show sustained attention to threat faces, whereas low anxious attend more to happy faces."',
+    ex:'HSA individuals show a large "hot spot" on the angry face in neural heat maps, while LSA individuals show greater activity for happy faces.',
+    eq:'What is attentional bias in SAD and how was it demonstrated experimentally?',
+    ea:'Attentional bias in SAD refers to the tendency of socially anxious individuals to selectively direct and sustain attention toward social threat cues, particularly angry or critical faces. It was demonstrated using a flickering stimuli paradigm where pairs of faces (one angry, one happy/neutral) flicker at distinct frequencies (17.5 Hz and 14.0 Hz) for 3000 ms. Frequency-tagging of brain responses reveals which face the participant is attending to. HSA participants showed sustained, elevated neural responses to angry faces; LSA participants showed greater responses to happy faces. This bias likely maintains SAD by keeping the attentional focus on potential social threat, preventing habituation and reinforcing fear of social evaluation.'
+  },
+  {
+    id:'c17', topic:'t3', title:'Exposure Therapy',
+    def:'A CBT-based treatment for anxiety disorders grounded in <b>fear extinction learning</b> — repeated, controlled exposure to feared stimuli without the aversive outcome reduces the conditioned fear response.',
+    exp:'Based on principles of fear extinction (new inhibitory learning alongside the original fear memory). Forcadell et al. (2017): Lab-based fear learning tests — specifically measuring the <b>startle reflex extinction</b> — can predict which patients are most likely to benefit from exposure-based treatment. If a patient\'s startle reflex extinguishes easily in a lab setting, they are statistically more likely to achieve a major fear reduction in actual therapy. New approaches include <b>virtual reality exposure therapy</b>.',
+    ex:'A person with spider phobia undergoes graded exposure: pictures of spiders → videos → model spider → live spider in a jar — conditioned fear gradually extinguishes.',
+    eq:'On what learning principle is exposure therapy based, and what did Forcadell et al. (2017) find?',
+    ea:'Exposure therapy is based on fear extinction learning — specifically the principle that repeated, controlled exposure to a CS in the absence of the UCS leads to new inhibitory learning that suppresses (but does not erase) the original fear memory. Forcadell et al. (2017) found that laboratory fear learning tests measuring startle reflex extinction can serve as predictive biomarkers: patients whose startle reflex extinguishes easily in a fear conditioning lab paradigm are statistically more likely to benefit significantly from exposure-based therapy. This suggests startle measures may help clinicians select patients most likely to respond to exposure treatment.'
+  },
+  {
+    id:'c18', topic:'t3', title:'DSM-5 Anxiety Disorders Overview',
+    def:'The DSM-5 recognises <b>five primary adult anxiety disorders</b> and <b>two childhood-specific types</b>.',
+    exp:'Adult: (1) <b>Specific Phobia</b> — fear of specific stimulus; (2) <b>Social Anxiety Disorder (SAD)</b> — fear of social situations; (3) <b>Panic Disorder (PD)</b> — recurrent unexpected panic attacks; (4) <b>Agoraphobia</b> — avoidance where escape difficult; (5) <b>Generalised Anxiety Disorder (GAD)</b> — excessive, chronic worry. Childhood: (1) <b>Separation Anxiety Disorder</b> — excessive fear of separation; (2) <b>Selective Mutism</b> — failure to speak in specific social situations.',
+    ex:'A child who refuses to speak at school but talks freely at home presents with Selective Mutism — one of the childhood-specific anxiety disorders.',
+    eq:'List and briefly describe the five primary DSM-5 anxiety disorders and the two childhood-specific types.',
+    ea:'DSM-5 primary anxiety disorders: (1) Specific Phobia — marked fear of a specific object/situation (fear conditioning model); (2) Social Anxiety Disorder — fear of social situations, linked to enhanced social conditioning; (3) Panic Disorder — recurrent unexpected panic attacks, linked to context conditioning; (4) Agoraphobia — avoidance of places where escape may be difficult; (5) Generalised Anxiety Disorder — excessive, difficult-to-control worry about multiple domains, chronic. Childhood: (1) Separation Anxiety Disorder — excessive distress when separated from attachment figures; (2) Selective Mutism — persistent failure to speak in specific social situations despite speaking in others.'
+  },
+  // ===== L4: CHILD ABUSE =====
+  {
+    id:'c19', topic:'t4', title:'Child Abuse — General Definition',
+    def:'"Any form of threatening or violent interactions of a <b>physical, psychological or sexual nature</b> against a minor, actively or passively imposed on by parents or other persons on whom the minor is in a relationship of <b>dependency or unfreedom</b>, which causes or threatens to cause serious harm."',
+    exp:'Child abuse is both a <b>possible cause</b> AND a <b>possible consequence</b> of mental illness. It can produce <b>permanent neurological alterations</b> and has significant societal impact. Many clinical clients have been abused, and there is a heightened chance that abused clients will abuse their own children (intergenerational cycle).',
+    ex:'A parent with untreated depression may neglect a child\'s emotional needs (passive psychological abuse), illustrating how mental illness can be both cause and consequence.',
+    eq:'Define child abuse and explain its bidirectional relationship with mental illness.',
+    ea:'Child abuse is any threatening or violent interaction of a physical, psychological, or sexual nature against a minor imposed by caregivers or persons in positions of power/dependency over the child, causing or threatening serious harm. Its relationship with mental illness is bidirectional: (1) Child abuse is a possible cause — exposure to abuse increases risk of PTSD, depression, anxiety, substance use, eating disorders, and self-harm; (2) Child abuse is a possible consequence — parents with mental illness (e.g., depression, addiction) are at higher risk of neglect or abuse. This creates an intergenerational cycle that is a priority in clinical practice.'
+  },
+  {
+    id:'c20', topic:'t4', title:'Why Recognition of Child Abuse is Difficult',
+    def:'The identification of child abuse in clinical settings is complicated by multiple factors that reduce the visibility and detectability of signs.',
+    exp:'Key barriers: (1) <b>Signals are not always visible</b>; (2) <b>Signals vary per age category</b> — different presentations at different developmental stages; (3) <b>Signals must occur together</b> (no single sign is diagnostic); (4) <b>Children are very loyal</b>, ashamed, and/or have difficulty trusting adults — reluctance to disclose.',
+    ex:'A 6-year-old being emotionally abused may show only subtle withdrawal and declining school performance — easily attributed to other causes.',
+    eq:'Why is recognising child abuse particularly challenging, and what principles should guide clinical assessment?',
+    ea:'Recognition is difficult because: (1) Physical signs are not always visible — especially for emotional/psychological abuse; (2) Signs vary by age — a toddler and a teenager show different behavioural indicators; (3) No single sign is diagnostic — multiple signals must co-occur; (4) Children rarely disclose abuse due to loyalty to the perpetrator, shame, fear of consequences, or difficulty trusting adults. Clinically: assessment should use multi-method, multi-informant approaches; be aware of age-specific presentations; not rely on a single indicator; and create a safe, trusting therapeutic environment to facilitate disclosure.'
+  },
+  {
+    id:'c21', topic:'t4', title:'Behavioural Problems Associated with Child Abuse',
+    def:'Child abuse manifests in three domains of behavioural problems: <b>Internalising, Externalising, and Related disorders</b>.',
+    exp:'<b>Internalising:</b> Fear of failure, low self-image, depressed/sad/withdrawn, passive, nervous/scared, apathy. <b>Externalising:</b> Hyperactive, destructive, aggressive. <b>Related disorders:</b> Substance use, eating disorders, self-harm, suicidal ideation.',
+    ex:'A teenager who was abused may present with all three domains: social withdrawal (internalising), aggressive outbursts (externalising), and substance use (related disorder).',
+    eq:'Describe the three categories of behavioural problems in abused children and give examples from each.',
+    ea:'(1) Internalising problems: fear of failure, low self-image, depression, sadness, withdrawal, passivity, nervousness/fearfulness, and apathy — reflecting inward-directed distress. (2) Externalising problems: hyperactivity, destructive behaviour, and aggression — reflecting outward-directed distress. (3) Related disorders: substance use disorders, eating disorders, self-harm, and suicidal ideation — representing more complex comorbidities. Many abused children present across all three domains, and clinicians should screen comprehensively. These presentations can mask the underlying abuse if viewed in isolation.'
+  },
+  {
+    id:'c22', topic:'t4', title:'Addiction as Brain Disease',
+    def:'Addiction results from <b>overactivation of reward and stress circuits</b> together with <b>weakened prefrontal control</b>, leading to compulsive, habit-driven substance use.',
+    exp:'Three key brain circuits: (1) <b>Basal Ganglia</b> — reward/"GO" signal → <b>overactivated</b> in addiction; (2) <b>Amygdala</b> — stress/"alarm" signal → <b>overactivated</b> in addiction; (3) <b>Prefrontal Cortex</b> — control/"brake" → <b>weakened</b> in addiction. The balance between these three systems is disrupted: the "go" and "stress" signals become too loud, while the "brake" becomes too weak, producing compulsive habit-driven use.',
+    ex:'A person with alcohol dependence experiences intense cravings (basal ganglia overactive) and stress-driven urges (amygdala overactive) that their weakened prefrontal inhibition cannot override.',
+    eq:'Explain the brain disease model of addiction and the three neural circuits involved.',
+    ea:'The brain disease model of addiction holds that compulsive substance use results from a pathological disruption of three neural circuits: (1) Basal Ganglia (reward/habit/GO circuit) becomes overactivated, creating powerful cravings and habit-driven behaviour; (2) Amygdala (stress/alarm circuit) becomes overactivated, producing withdrawal-related stress and negative affect driving further use; (3) Prefrontal Cortex (executive control/brake) becomes weakened, reducing the capacity for impulse control and decision-making. Together: GO and ALARM become too loud, BRAKE too weak → compulsive, habit-driven substance use despite negative consequences.'
+  }
+];
+
+// ========== FLASHCARDS ==========
+const flashcards = [
+  { topic:'t1', q:'What are the 4 D\'s used to diagnose a psychological disorder?', a:'<strong>Deviance</strong> (departure from statistical/social norm), <strong>Distress</strong> (emotional/physical pain), <strong>Dysfunction</strong> (impaired daily functioning), and <strong>Dangerous</strong> (potential harm). No single D is sufficient; all involve social judgements.' },
+  { topic:'t1', q:'What is the main limitation of "Deviance" as a diagnostic criterion?', a:'Cut-points are arbitrary; statistical rarity ≠ disorder (e.g., genius is rare). Deviance is culturally relative and not sufficient alone.' },
+  { topic:'t1', q:'What are two key considerations when applying the 4 D\'s across cultures?', a:'(1) Cultural expressions of a single disorder vary (e.g., somatic vs. emotional presentation of depression). (2) Stigma reduces willingness to admit symptoms. Theories and frameworks also change over time.' },
+  { topic:'t1', q:'True or False: Distress is both necessary and sufficient for a psychiatric diagnosis.', a:'<strong>False.</strong> Distress is neither necessary nor sufficient. Some serious disorders produce no distress (e.g., early-stage mania). Distress is also very subjective.' },
+  { topic:'t2', q:'Define "worldview" as used in the Integrative Worldview Framework.', a:'A <strong>comprehensive framework of meaning</strong> through which people understand reality, knowledge, values, identity, and society. Often implicit; shaped by culture and upbringing; influences interpretation of mental health.' },
+  { topic:'t2', q:'Name the four worldviews identified in the IWF.', a:'<strong>Traditional, Modern, Post-Modern, Integrative.</strong>' },
+  { topic:'t2', q:'What are three negative mental health consequences of the Modern Worldview?', a:'(1) Materialism → lower life satisfaction. (2) Individualism → social isolation and anxiety. (3) Secularism → existential anxiety.' },
+  { topic:'t2', q:'What are three positive mental health associations of the Integrative Worldview?', a:'(1) Holistic spirituality → better mental health. (2) Self-transcendence → reduced symptoms. (3) Balance & connectedness → resilience.' },
+  { topic:'t2', q:'Complete: "The suffering [in depression] is universal. The meaning, experience, and response..."', a:'<strong>"...depends on worldview."</strong> — This illustrates that while core suffering may be universal, cultural and worldview context shapes the entire MH experience.' },
+  { topic:'t2', q:'What does the Modern Worldview hold about "reality"?', a:'Reality is <strong>material</strong> — only what can be measured exists. Knowledge comes from science, rationality, and empirical evidence.' },
+  { topic:'t3', q:'What is the key difference between anxiety and fear in terms of orientation and specificity?', a:'<strong>Fear:</strong> specific, distinct, imminent, identified threat → fight-or-flight. <strong>Anxiety:</strong> future-oriented, diffuse, general apprehension about possible danger → hypervigilance, hyperarousal.' },
+  { topic:'t3', q:'What physiological changes are associated with fear mobilisation?', a:'Heart rate acceleration, elevated blood pressure, and other sympathetic nervous system activations — the fight-or-flight response.' },
+  { topic:'t3', q:'Which anxiety disorder is modelled by fear conditioning, and which by context conditioning?', a:'<strong>Fear conditioning → Specific Phobia.</strong> <strong>Context conditioning → Panic Disorder.</strong>' },
+  { topic:'t3', q:'What is the "low road" in LeDoux\'s model?', a:'The fast, unconscious pathway: <strong>Thalamus → Amygdala directly</strong>, bypassing the cortex. Enables immediate fear response before conscious identification of threat.' },
+  { topic:'t3', q:'What does amygdala lesion evidence show about fear processing?', a:'Amygdala lesion patients retain <strong>declarative knowledge</strong> of the danger (high road intact) but lack <strong>fear-potentiated startle</strong> — demonstrating the amygdala is necessary for automatic emotional fear responses.' },
+  { topic:'t3', q:'What percentage of SAD patients report childhood bullying? (McCabe et al., 2003)', a:'<strong>92%</strong> of adult SAD patients — compared to <strong>35%</strong> of OCD patients. This supports a social conditioning model of SAD acquisition.' },
+  { topic:'t3', q:'What is "enhanced conditionability" in SAD?', a:'People with SAD learn fear associations <strong>more strongly</strong> when the UCS is socially relevant (criticism, rejection, angry faces), compared to people without SAD.' },
+  { topic:'t3', q:'What does Forcadell et al. (2017) show about exposure therapy prediction?', a:'Patients whose <strong>startle reflex extinguishes easily</strong> in lab fear-conditioning tests are statistically more likely to achieve major fear reduction in actual exposure therapy — startle extinction predicts therapy success.' },
+  { topic:'t3', q:'Name the 5 primary DSM-5 adult anxiety disorders.', a:'(1) Specific Phobia, (2) Social Anxiety Disorder (SAD), (3) Panic Disorder (PD), (4) Agoraphobia, (5) Generalised Anxiety Disorder (GAD).' },
+  { topic:'t3', q:'What are the two childhood-specific anxiety disorders in DSM-5?', a:'(1) <strong>Separation Anxiety Disorder</strong> (fear of separation from attachment figures) and (2) <strong>Selective Mutism</strong> (failure to speak in specific social situations).' },
+  { topic:'t3', q:'What method was used to demonstrate attentional bias in SAD? Key finding?', a:'<strong>Flickering stimuli paradigm</strong> (17.5 Hz / 14.0 Hz, 3000 ms). <strong>HSA</strong>: sustained attention to angry (threat) faces. <strong>LSA</strong>: more attention to happy faces.' },
+  { topic:'t4', q:'Define child abuse per the lecture definition.', a:'Any threatening or violent interaction of a <strong>physical, psychological, or sexual</strong> nature against a minor, imposed by caregivers or persons in positions of dependency, causing or threatening serious harm.' },
+  { topic:'t4', q:'What is the bidirectional relationship between child abuse and mental illness?', a:'Child abuse is both a <strong>possible cause</strong> (increases MH risk) AND a <strong>possible consequence</strong> (parents with MH issues at higher abuse risk). Creates an intergenerational cycle. Abuse also causes permanent neurological alterations.' },
+  { topic:'t4', q:'Give four reasons why recognising child abuse is difficult.', a:'(1) Signals not always visible; (2) Signals vary by age category; (3) Signals must occur together (no single sign diagnostic); (4) Children are loyal/ashamed/distrust adults — reluctant to disclose.' },
+  { topic:'t4', q:'List the three categories of behavioural problems seen in child abuse.', a:'(1) <strong>Internalising:</strong> fear of failure, low self-image, depression, withdrawal, passivity, nervousness, apathy. (2) <strong>Externalising:</strong> hyperactive, destructive, aggressive. (3) <strong>Related disorders:</strong> substance use, eating disorders, self-harm, suicidal ideation.' },
+  { topic:'t4', q:'Name the three brain circuits disrupted in addiction and describe how each is affected.', a:'(1) <strong>Basal Ganglia</strong> (reward/GO) → overactivated. (2) <strong>Amygdala</strong> (stress/alarm) → overactivated. (3) <strong>Prefrontal Cortex</strong> (control/brake) → weakened. Result: compulsive habit-driven substance use.' },
+  { topic:'t4', q:'How is addiction described as a "brain disease"?', a:'The <strong>balance between reward, stress, and control circuits is pathologically disrupted</strong>: GO and ALARM signals too loud, BRAKE too weak → compulsive use despite negative consequences. Not a moral failing but a neurobiological disruption.' },
+];
+
+// ========== MCQ DATA ==========
+const mcqs = [
+  { q:'Which of the 4 D\'s is described as neither necessary nor sufficient, and is very subjective?',
+    opts:['Deviance','Distress','Dysfunction','Dangerous'], correct:1,
+    topic:'t1' },
+  { q:'According to the lecture, diagnoses on psychological disorders "always involve ____ based on ____ and ____ of a society."',
+    opts:['Medical judgements / biology / genetics','Social judgements / values / expectations','Personal judgements / preferences / culture','Clinical judgements / symptoms / duration'], correct:1,
+    topic:'t1' },
+  { q:'Which worldview combines science, experience, AND spirituality as valid sources of knowledge?',
+    opts:['Traditional','Modern','Post-Modern','Integrative'], correct:3,
+    topic:'t2' },
+  { q:'The Modern Worldview\'s focus on individualism is associated with:',
+    opts:['Better mental health through autonomy','Social isolation and increased anxiety','Stronger community belonging','Reduced existential anxiety'], correct:1,
+    topic:'t2' },
+  { q:'What is the key difference between the "low road" and "high road" in fear processing?',
+    opts:['Speed; low road goes thalamus→cortex→amygdala','Pathway; low road goes thalamus→amygdala directly (faster, unconscious)','Emotion; low road produces anxiety, high road produces fear','Location; low road is in brainstem, high road is in cerebellum'], correct:1,
+    topic:'t3' },
+  { q:'According to McCabe et al. (2003), what percentage of adult SAD patients reported childhood bullying?',
+    opts:['35%','60%','75%','92%'], correct:3,
+    topic:'t3' },
+  { q:'Context conditioning (rather than fear conditioning) is the experimental model for which anxiety disorder?',
+    opts:['Specific Phobia','Social Anxiety Disorder','Panic Disorder','GAD'], correct:2,
+    topic:'t3' },
+  { q:'Forcadell et al. (2017) found that patients with more rapid _____ in a lab setting achieved better outcomes in exposure therapy.',
+    opts:['Fear acquisition','Startle reflex extinction','Cortisol reduction','Avoidance behaviour'], correct:1,
+    topic:'t3' },
+  { q:'In the brain disease model of addiction, the Prefrontal Cortex is described as:',
+    opts:['Overactivated — "too much GO"','Overactivated — "too much ALARM"','Weakened — the "BRAKE" is insufficient','Structurally destroyed'], correct:2,
+    topic:'t4' },
+  { q:'Child abuse is described as having a ______ relationship with mental illness.',
+    opts:['Unidirectional — abuse causes MH problems only','Unidirectional — MH problems cause abuse only','Bidirectional — abuse is both a cause and consequence','No established relationship'], correct:2,
+    topic:'t4' },
+  { q:'Which is NOT listed as a reason why recognition of child abuse is difficult?',
+    opts:['Signals not always visible','Signals vary per age category','Children are very loyal and ashamed','Abusers always exhibit recognisable warning signs'], correct:3,
+    topic:'t4' },
+  { q:'Attentional bias in SAD means socially anxious individuals:',
+    opts:['Avoid looking at faces entirely','Show sustained attention to happy faces','Show sustained attention to threatening (angry) faces','Have no measurable attentional difference'], correct:2,
+    topic:'t3' },
+];
+
+// ========== STATE ==========
+let knownCards = {};
+let fcDeck = [...flashcards];
+let fcIdx = 0;
+let fcFlipped = false;
+
+// ========== INIT ==========
+function init() {
+  renderCards('all');
+  renderFC();
+  renderMCQ();
+  updateTotals();
+}
+
+// ========== VIEW SWITCHING ==========
+const viewTitles = {
+  mindmap: 'Interactive Mind Map',
+  cards: 'Concept Cards',
+  flashcards: 'Flashcard Quiz',
+  visuals: 'Visual References',
+  mcq: 'MCQ Practice'
+};
+function switchView(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('view-title').textContent = viewTitles[id] || id;
+}
+
+function jumpTo(topic) {
+  filterCards(topic, null);
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.textContent.trim().includes('Concept')) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-cards').classList.add('active');
+  document.getElementById('view-title').textContent = 'Concept Cards';
+}
+
+// ========== CONCEPT CARDS ==========
+function renderCards(filter) {
+  const grid = document.getElementById('cards-grid');
+  const filtered = filter === 'all' ? cards : cards.filter(c => c.topic === filter);
+  grid.innerHTML = filtered.map(card => `
+    <div class="concept-card ${card.topic}-card" id="card-${card.id}">
+      <div class="card-header" onclick="toggleCard('${card.id}')">
+        <div>
+          <span class="card-tag">${topics[card.topic].label}</span>
+          <div class="card-title">${card.title}</div>
+        </div>
+        <div class="card-toggle">+</div>
+      </div>
+      <div class="card-body">
+        <div class="card-section">
+          <div class="card-section-label">Definition</div>
+          <div class="card-section-content">${card.def}</div>
+        </div>
+        <div class="card-section">
+          <div class="card-section-label">Explanation</div>
+          <div class="card-section-content">${card.exp}</div>
+        </div>
+        <div class="card-section">
+          <div class="card-section-label">Example</div>
+          <div class="card-section-content">${card.ex}</div>
+        </div>
+        <div class="exam-box">
+          <div class="exam-q">📝 Exam Q: ${card.eq}</div>
+          <div class="exam-a">${card.ea}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleCard(id) {
+  const el = document.getElementById('card-' + id);
+  const wasExpanded = el.classList.contains('expanded');
+  el.classList.toggle('expanded');
+  if (!wasExpanded) {
+    knownCards['view_' + id] = true;
+    updateProgress();
+  }
+}
+
+function filterCards(topic, pill) {
+  renderCards(topic);
+  if (pill) {
+    document.querySelectorAll('.topic-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+  }
+}
+
+// ========== FLASHCARDS ==========
+function renderFC() {
+  const deck = fcDeck;
+  document.getElementById('fc-total').textContent = deck.length;
+  document.getElementById('fc-of').textContent = deck.length;
+  if (deck.length === 0) return;
+  showFC(fcIdx);
+}
+
+function showFC(i) {
+  fcFlipped = false;
+  const inner = document.getElementById('fc-inner');
+  inner.classList.remove('flipped');
+  const card = fcDeck[i];
+  const t = topics[card.topic];
+  const colMap = { t1:'var(--c1)', t2:'var(--c2)', t3:'var(--c3)', t4:'var(--c4)' };
+  const dimMap = { t1:'var(--c1-dim)', t2:'var(--c2-dim)', t3:'var(--c3-dim)', t4:'var(--c4-dim)' };
+  ['fc-badge','fc-badge-back'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = t.label;
+    el.style.background = dimMap[card.topic];
+    el.style.color = colMap[card.topic];
+  });
+  document.getElementById('fc-question').textContent = card.q;
+  document.getElementById('fc-answer').innerHTML = card.a;
+  document.getElementById('fc-idx').textContent = i + 1;
+
+  // Apply topic border
+  ['fc-t1','fc-t2','fc-t3','fc-t4'].forEach(cls => inner.classList.remove(cls));
+  document.getElementById('fc-front').className = 'fc-face fc-front fc-' + card.topic;
+  document.getElementById('fc-back').className = 'fc-face fc-back fc-' + card.topic;
+  updateFCKnownCount();
+}
+
+function flipCard() {
+  fcFlipped = !fcFlipped;
+  document.getElementById('fc-inner').classList.toggle('flipped', fcFlipped);
+}
+
+function nextFC() {
+  fcIdx = (fcIdx + 1) % fcDeck.length;
+  showFC(fcIdx);
+}
+
+function prevFC() {
+  fcIdx = (fcIdx - 1 + fcDeck.length) % fcDeck.length;
+  showFC(fcIdx);
+}
+
+function shuffleFC() {
+  for (let i = fcDeck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fcDeck[i], fcDeck[j]] = [fcDeck[j], fcDeck[i]];
+  }
+  fcIdx = 0;
+  showFC(fcIdx);
+}
+
+function filterFC(topic) {
+  fcDeck = topic === 'all' ? [...flashcards] : flashcards.filter(f => f.topic === topic);
+  fcIdx = 0;
+  document.getElementById('fc-of').textContent = fcDeck.length;
+  document.getElementById('fc-total').textContent = fcDeck.length;
+  if (fcDeck.length > 0) showFC(fcIdx);
+}
+
+function resetFC() {
+  fcDeck = [...flashcards];
+  fcIdx = 0;
+  Object.keys(knownCards).filter(k=>k.startsWith('fc_')).forEach(k => delete knownCards[k]);
+  renderFC();
+}
+
+function markKnow() {
+  const card = fcDeck[fcIdx];
+  const key = 'fc_' + fcIdx + '_' + card.q.slice(0,20);
+  knownCards[key] = true;
+  updateProgress();
+  nextFC();
+}
+
+function markUnsure() {
+  const card = fcDeck[fcIdx];
+  const key = 'fc_' + fcIdx + '_' + card.q.slice(0,20);
+  delete knownCards[key];
+  updateProgress();
+  nextFC();
+}
+
+function updateFCKnownCount() {
+  const n = Object.keys(knownCards).filter(k => k.startsWith('fc_')).length;
+  document.getElementById('fc-known-count').textContent = n;
+}
+
+// ========== MCQ ==========
+function renderMCQ() {
+  const container = document.getElementById('mcq-container');
+  container.innerHTML = mcqs.map((mcq, qi) => `
+    <div class="mcq-item">
+      <div class="mcq-question"><strong>Q${qi+1}.</strong> ${mcq.q}</div>
+      ${mcq.opts.map((opt, oi) => `
+        <div class="mcq-option ${oi === mcq.correct ? 'correct' : ''}"
+             onclick="selectMCQ(this, ${qi}, ${oi})">
+          ${String.fromCharCode(65+oi)}. ${opt}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function selectMCQ(el, qi, oi) {
+  // already handled visually in CSS (correct class always shown)
+  const item = el.closest('.mcq-item');
+  item.querySelectorAll('.mcq-option').forEach((o, i) => {
+    if (i === oi && i !== mcqs[qi].correct) o.classList.add('wrong');
+  });
+  knownCards['mcq_' + qi] = (oi === mcqs[qi].correct);
+  updateProgress();
+}
+
+// ========== PROGRESS ==========
+function updateTotals() {
+  const byTopic = { t1:0, t2:0, t3:0, t4:0 };
+  cards.forEach(c => byTopic[c.topic]++);
+  document.getElementById('total-cards-count').textContent = flashcards.length;
+}
+
+function updateProgress() {
+  // Per-topic: count viewed cards
+  const byTopic = { t1:{ total:0, done:0 }, t2:{ total:0, done:0 }, t3:{ total:0, done:0 }, t4:{ total:0, done:0 } };
+  cards.forEach(c => {
+    byTopic[c.topic].total++;
+    if (knownCards['view_' + c.id]) byTopic[c.topic].done++;
+  });
+  // FC cards
+  flashcards.forEach((f, i) => {
+    byTopic[f.topic].total++;
+    if (Object.keys(knownCards).filter(k=>k.startsWith('fc_') && k.includes(f.q.slice(0,20))).length > 0) byTopic[f.topic].done++;
+  });
+
+  ['t1','t2','t3','t4'].forEach((t,i) => {
+    const pct = byTopic[t].total === 0 ? 0 : Math.round(100 * byTopic[t].done / byTopic[t].total);
+    document.getElementById('p'+(i+1)+'-pct').textContent = pct + '%';
+    document.getElementById('p'+(i+1)+'-bar').style.width = pct + '%';
+  });
+  const totalKnown = Object.keys(knownCards).filter(k=>k.startsWith('fc_')).length;
+  document.getElementById('total-known').textContent = totalKnown;
+  updateFCKnownCount();
+}
+
+// init on load
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
